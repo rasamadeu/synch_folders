@@ -1,20 +1,61 @@
+import filecmp
+import hashlib
 import os
 import shutil
 import pdb
+from datetime import datetime
 
 
 class File:
-    def __init__(self, filename):
+    def __init__(self, filename, path, shallow=True):
         self.__filename = filename
-        # self.__hash = hash
+        self.__path = path
+        # shallow controls how we check if files are equal
+        # shallow = True:
+        # compare files metadata (file type, size and modification time)
+        # shallow = False:
+        # compare file content (with md5 hashing)
+        self.__shallow = shallow
+        if not self.__shallow:
+            # Buffer with 4kB size
+            BUF_SIZE = 4096
+            hash = hashlib.md5()
+            pdb.set_trace()
+            with open(self.get_path(), 'rb') as f:
+                buf = f.read(BUF_SIZE)
+                while buf:
+                    hash.update(buf)
+                    buf = f.read(BUF_SIZE)
+            self.__hash = hash.hexdigest()
+            print(self.__hash)
 
     def get_filename(self):
         return self.__filename
 
+    def get_file_hash(self):
+        return self.__hash
+
+    def get_path(self):
+        return self.__path + '/' + self.__filename
+
+    def __eq__(self, file):
+        if self.__shallow:
+            return filecmp.cmp(self.get_path(), file.get_path())
+        else:
+            return self.get_file_hash() == file.get_file_hash()
+
+    def __str__(self):
+        return self.get_path()
+
 
 class Directory:
 
-    def __init__(self, path: str, root_path=""):
+    def __init__(self, path: str, root_path="", shallow=True):
+
+        # Step for better formatting of messages
+        if path[-1] == "/":
+            path = path[:-1]
+
         if not root_path:
             self.__root_path = path
             self.__rel_path = ""
@@ -23,10 +64,12 @@ class Directory:
             self.__rel_path = path
         self.__dirs = dict()
         self.__files = dict()
+        # shallow controls how we check if files are equal
+        self.__shallow = shallow
 
-        cur_path = self.__root_path + self.__rel_path
-        content = os.listdir(cur_path)
         # Recursive creation of Directory
+        cur_path = self.get_dir_path()
+        content = os.listdir(cur_path)
         for f in content:
             if os.path.isdir(cur_path + "/" + f):
                 self.__dirs[f] = Directory(
@@ -34,10 +77,10 @@ class Directory:
                     self.__root_path
                 )
             else:
-                self.__files[f] = File(f)
+                self.__files[f] = File(f, cur_path, self.__shallow)
 
     def get_dir_path(self) -> str:
-        return self.__root_path + self.__rel_path + '/'
+        return self.__root_path + "/" + self.__rel_path + "/"
 
     def get_files(self) -> dict():
         return self.__files
@@ -45,47 +88,80 @@ class Directory:
     def get_dirs(self) -> dict():
         return self.__dirs
 
+    # Log operation message
+    def log_message(self, mode: str, fname: str, ftype: str, source_name: str) -> str:
+        message = datetime.now().ctime()
+        if ftype == "dir":
+            fname = fname + "/"
+        if mode == "CREATE":
+            return message + f":  Create {fname} {ftype} from {source_name} in {self.get_dir_path()}"
+        if mode == "COPY":
+            return message + f":  Copy {fname} {ftype} from {source_name} to {self.get_dir_path()}"
+        if mode == "DELETE":
+            return message + f":  Delete {fname} {ftype} in {self.get_dir_path()}"
+
     # Synchs this directory to exactly match source Directory
     def synch(self, source) -> None:
         source_files = source.get_files()
         source_dirs = source.get_dirs()
-        dirpath = self.get_dir_path()
+        source_dirpath = source.get_dir_path()
+        replica_dirpath = self.get_dir_path()
 
         # Remove files from replica dir that are not in source dir
-        for filename in self.__files:
+        for filename in list(self.__files):
             if filename not in source_files:
-                os.remove(dirpath + filename)
-                self.__files.remove(filename)
+                os.remove(replica_dirpath + "/" + filename)
+                del self.__files[filename]
+                log_msg = self.log_message(
+                    "DELETE", filename, "file", source_dirpath)
+                print(log_msg)
 
         # Create exact copy of files of source dir in replica dir
         for filename in source_files:
+            origin = source_dirpath + "/" + filename
+            dest = replica_dirpath + "/" + filename
             if filename in self.__files:
-                pass
+                # Check if files are the same
+                if not self.__files[filename] == source_files[filename]:
+                    shutil.copy2(origin, dest)
+                    log_msg = self.log_message(
+                        "COPY", filename, "file", source_dirpath)
+                    print(log_msg)
             else:
-                origin = dirpath + filename
-                dest = self.get_dir_path() + filename
-                os.copy2(origin, dest)
-                self.__files.add(filename)
+                shutil.copy2(origin, dest)
+                self.__files[filename] = File(filename, dest, self.__shallow)
+                log_msg = self.log_message(
+                    "CREATE", filename, "file", source_dirpath)
+                print(log_msg)
 
         # Remove dirs from replica dir that are not in source dir
-        for dirname in self.__dirs:
+        for dirname in list(self.__dirs):
             if dirname not in source_dirs:
-                shutil.rmtree(dirpath + dirname)
-                self.__dirs.remove(dirname)
+                shutil.rmtree(replica_dirpath + "/" + dirname)
+                del self.__dirs[dirname]
+                log_msg = self.log_message(
+                    "DELETE", dirname, "dir", source_dirpath)
+                print(log_msg)
 
         # Create exact copy of dirs of source dir in replica dir
-        for filename in source_files:
-            if filename in self.__files():
-                pass
+        for dirname in source_dirs:
+            if dirname in self.__dirs:
+                self.__dirs[dirname].synch(source_dirs[dirname])
             else:
-                origin = dirpath + dirname
-                dest = self.get_dir_path() + dirname
-                os.copytree(origin, dest)
-                self.__dirs.add(dirname)
+                origin = source_dirpath + "/" + dirname
+                dest = replica_dirpath + "/" + dirname
+                shutil.copytree(origin, dest)
+                self.__dirs[dirname] = Directory(
+                    self.__rel_path + "/" + dirname,
+                    self.__root_path
+                )
+                log_msg = self.log_message(
+                    "CREATE", dirname, "dir", source_dirpath)
+                print(log_msg)
 
     # Returns a string with the directory tree
-    def ls_dir(self, offset=""):
-        print_str = (f"{offset}dir: {self.get_dir_path()}\n")
+    def ls_dir(self, offset="") -> str:
+        print_str = (f"{offset}dir: {self.get_dir_path().split('/')[-2]}/\n")
         for file in sorted(list(self.__files.keys())):
             print_str += f"{offset}  f: {file}\n"
         for dir in sorted(list(self.__dirs.keys())):

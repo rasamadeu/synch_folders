@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 import sys
-import argparse
 import os
+import shutil
+import argparse
 from time import sleep
 
 import directory as dir
@@ -17,15 +18,22 @@ def main():
         print("usage: synch_folders source_folder replica_folder time_delta_sec log_file")
         return
 
-    src = args[0]
+    source = args[0]
     replica = args[1]
 
-    # Create
-    src_dir = dir.Directory(src)
-    replica_dir = dir.Directory(src)
-    print(src_dir)
-    # replica_dir = dir.Directory(replica)
+    # Instantiate Directory objects for source and replica
 
+    i = 1
+    while True:
+        source_dir = dir.Directory(source, shallow=True)
+        replica_dir = dir.Directory(replica, shallow=True)
+        os.system('clear')
+        print(source_dir)
+        print(i)
+        print(replica_dir)
+        i += 1
+        replica_dir.synch(source_dir)
+        sleep(10)
     return
 
 
