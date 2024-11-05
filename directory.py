@@ -20,20 +20,22 @@ class File:
             # Buffer with 4kB size
             BUF_SIZE = 4096
             hash = hashlib.md5()
-            pdb.set_trace()
             with open(self.get_path(), 'rb') as f:
                 buf = f.read(BUF_SIZE)
                 while buf:
                     hash.update(buf)
                     buf = f.read(BUF_SIZE)
             self.__hash = hash.hexdigest()
-            print(self.__hash)
 
     def get_filename(self):
         return self.__filename
 
     def get_file_hash(self):
         return self.__hash
+
+    def update_file_hash(self, file):
+        if not self.__shallow:
+            self.__hash = file.get_file_hash()
 
     def get_path(self):
         return self.__path + '/' + self.__filename
@@ -85,7 +87,7 @@ class Directory:
         if ftype == "dir":
             fname = fname + "/"
         if mode == "CREATE":
-            return message + f":  Create {fname} {ftype} from {source_name} in {self.get_dir_path()}"
+            return message + f":  Create and Copy {fname} {ftype} from {source_name} in {self.get_dir_path()}"
         if mode == "COPY":
             return message + f":  Copy {fname} {ftype} from {source_name} to {self.get_dir_path()}"
         if mode == "DELETE":
@@ -115,12 +117,15 @@ class Directory:
                 # Check if files are the same
                 if not self.__files[filename] == source_files[filename]:
                     shutil.copy2(origin, dest)
+                    self.__files[filename].update_file_hash(
+                        source_files[filename])
                     log_msg = self.log_message(
                         "COPY", filename, "file", source_dirpath)
                     print(log_msg)
             else:
                 shutil.copy2(origin, dest)
-                self.__files[filename] = File(filename, dest, self.__shallow)
+                self.__files[filename] = File(
+                    filename, replica_dirpath, self.__shallow)
                 log_msg = self.log_message(
                     "CREATE", filename, "file", source_dirpath)
                 print(log_msg)
