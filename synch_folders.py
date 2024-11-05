@@ -21,10 +21,10 @@ def check_replica(replica, source):
         print("The replica path already exists.")
         print("Are you sure you want to proceed? Proceeding with the program will delete replica folder contents.")
         answer = input("Write [y]es or [n]o: ")
-        while answer.lower() not in set("y", "n", "yes", "no"):
+        while answer.lower() not in {"y", "n", "yes", "no"}:
             answer = input("Invalid answer: please write [y]es or [n]o: ")
-        if answer.lower() in set("no", "n"):
-            raise Exception("Program terminated")
+        if answer.lower() in {"no", "n"}:
+            raise Exception()
         return replica
 
     os.mkdir(replica)
@@ -39,17 +39,19 @@ def check_time_delta(time_delta):
 
 
 def check_log_file(log_file):
-    if os.is_file(log_file):
+    if os.path.isdir(log_file):
+        raise Exception("log_file must contain a valid file path.")
+    if os.path.isfile(log_file):
         print("The log_file already exists.")
         print("Are you sure you want to proceed? Proceeding with the program will delete log_file contents.")
         answer = input("Write [y]es or [n]o: ")
-        while answer.lower() not in set("y", "n", "yes", "no"):
+        while answer.lower() not in {"y", "n", "yes", "no"}:
             answer = input("Invalid answer: please write [y]es or [n]o: ")
-        if answer.lower() in set("no", "n"):
-            raise Exception("Program terminated")
+        if answer.lower() in {"no", "n"}:
+            raise Exception()
 
     # Clear the log_file content
-    with open(log_file, 'w') as f:
+    with open(log_file, "w") as f:
         f.write("")
     return log_file
 
@@ -70,6 +72,7 @@ def main():
                         help="Option that sets shallow file comparison ON.\nIf set, files metadata is compared instead of its content.",
                         action="store_false")
     args = vars(parser.parse_args())
+    print(args)
     try:
         source = check_source(args["source"])
         replica = check_replica(args["replica"], args["source"])
@@ -77,17 +80,17 @@ def main():
         log_file = check_log_file(args["log_file"])
     except ValueError:
         print("time_delta must be a positive integer (seconds between synchronizations)")
+        print("Program terminated.")
     except Exception as e:
         print(e)
-        return
+        print("Program terminated.")
 
-    return
     source = args[0]
     replica = args[1]
 
     while True:
-        source_dir = dir.Directory(source, shallow=True)
-        replica_dir = dir.Directory(replica, shallow=True)
+        source_dir = dir.Directory(source, shallow=args["shallow"])
+        replica_dir = dir.Directory(replica, shallow=args["shallow"])
         replica_dir.synch(source_dir)
         sleep(time_delta)
     return
