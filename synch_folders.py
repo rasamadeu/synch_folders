@@ -59,7 +59,9 @@ def check_log_file(log_file):
 def main():
 
     parser = argparse.ArgumentParser(
-        description="This program synchs two folders: source and replica."
+        description=("This program synchs two folders: source and replica.\n"
+                     "Every time_delta seconds, the replica folder is updated to contain an exact copy of source.\n"
+                     "Log messages are presented in the console and stored in log_file.")
     )
     parser.add_argument("source", help="The path of the folder to be copied")
     parser.add_argument(
@@ -71,8 +73,8 @@ def main():
     parser.add_argument("-s", "--shallow",
                         help="Option that sets shallow file comparison ON.\nIf set, files metadata is compared instead of its content.",
                         action="store_false")
+
     args = vars(parser.parse_args())
-    print(args)
     try:
         source = check_source(args["source"])
         replica = check_replica(args["replica"], args["source"])
@@ -85,13 +87,10 @@ def main():
         print(e)
         print("Program terminated.")
 
-    source = args[0]
-    replica = args[1]
-
     while True:
         source_dir = dir.Directory(source, shallow=args["shallow"])
         replica_dir = dir.Directory(replica, shallow=args["shallow"])
-        replica_dir.synch(source_dir)
+        replica_dir.synch(source_dir, log_file)
         sleep(time_delta)
     return
 

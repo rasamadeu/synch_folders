@@ -6,6 +6,12 @@ import pdb
 from datetime import datetime
 
 
+# Append to log_file the log_message
+def store_log_message(log_file, log_message):
+    with open(log_file, 'a') as f:
+        f.write(log_message)
+
+
 class File:
     def __init__(self, filename, path, shallow=True):
         self.__filename = filename
@@ -94,7 +100,7 @@ class Directory:
             return message + f":  Delete {fname} {ftype} in {self.get_dir_path()}"
 
     # Synchs this directory to exactly match source Directory
-    def synch(self, source) -> None:
+    def synch(self, source, log_file) -> None:
         source_files = source.get_files()
         source_dirs = source.get_dirs()
         source_dirpath = source.get_dir_path()
@@ -108,6 +114,7 @@ class Directory:
                 log_msg = self.log_message(
                     "DELETE", filename, "file", source_dirpath)
                 print(log_msg)
+                store_log_message(log_file, log_msg)
 
         # Create exact copy of files of source dir in replica dir
         for filename in source_files:
@@ -122,6 +129,7 @@ class Directory:
                     log_msg = self.log_message(
                         "COPY", filename, "file", source_dirpath)
                     print(log_msg)
+                    store_log_message(log_file, log_msg)
             else:
                 shutil.copy2(origin, dest)
                 self.__files[filename] = File(
@@ -129,6 +137,7 @@ class Directory:
                 log_msg = self.log_message(
                     "CREATE", filename, "file", source_dirpath)
                 print(log_msg)
+                store_log_message(log_file, log_msg)
 
         # Remove dirs from replica dir that are not in source dir
         for dirname in list(self.__dirs):
@@ -138,6 +147,7 @@ class Directory:
                 log_msg = self.log_message(
                     "DELETE", dirname, "dir", source_dirpath)
                 print(log_msg)
+                store_log_message(log_file, log_msg)
 
         # Create exact copy of dirs of source dir in replica dir
         for dirname in source_dirs:
@@ -152,6 +162,7 @@ class Directory:
                 log_msg = self.log_message(
                     "CREATE", dirname, "dir", source_dirpath)
                 print(log_msg)
+                store_log_message(log_file, log_msg)
 
     # Returns a string with the directory tree
     def ls_dir(self, offset="") -> str:
