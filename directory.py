@@ -50,37 +50,28 @@ class File:
 
 class Directory:
 
-    def __init__(self, path: str, root_path="", shallow=True):
+    def __init__(self, path: str, shallow=True):
 
         # Step for better formatting of messages
-        if path[-1] == "/":
-            path = path[:-1]
+        if path[-1] != "/":
+            path += "/"
 
-        if not root_path:
-            self.__root_path = path
-            self.__rel_path = ""
-        else:
-            self.__root_path = root_path
-            self.__rel_path = path
+        self.__path = path
         self.__dirs = dict()
         self.__files = dict()
         # shallow controls how we check if files are equal
         self.__shallow = shallow
 
         # Recursive creation of Directory
-        cur_path = self.get_dir_path()
-        content = os.listdir(cur_path)
+        content = os.listdir(self.__path)
         for f in content:
-            if os.path.isdir(cur_path + "/" + f):
-                self.__dirs[f] = Directory(
-                    self.__rel_path + "/" + f,
-                    self.__root_path
-                )
+            if os.path.isdir(self.__path + f):
+                self.__dirs[f] = Directory(self.__path + f, self.__shallow)
             else:
-                self.__files[f] = File(f, cur_path, self.__shallow)
+                self.__files[f] = File(f, self.__path, self.__shallow)
 
     def get_dir_path(self) -> str:
-        return self.__root_path + "/" + self.__rel_path + "/"
+        return self.__path
 
     def get_files(self) -> dict():
         return self.__files
@@ -110,7 +101,7 @@ class Directory:
         # Remove files from replica dir that are not in source dir
         for filename in list(self.__files):
             if filename not in source_files:
-                os.remove(replica_dirpath + "/" + filename)
+                os.remove(replica_dirpath + filename)
                 del self.__files[filename]
                 log_msg = self.log_message(
                     "DELETE", filename, "file", source_dirpath)
@@ -118,8 +109,8 @@ class Directory:
 
         # Create exact copy of files of source dir in replica dir
         for filename in source_files:
-            origin = source_dirpath + "/" + filename
-            dest = replica_dirpath + "/" + filename
+            origin = source_dirpath + filename
+            dest = replica_dirpath + filename
             if filename in self.__files:
                 # Check if files are the same
                 if not self.__files[filename] == source_files[filename]:
@@ -137,7 +128,7 @@ class Directory:
         # Remove dirs from replica dir that are not in source dir
         for dirname in list(self.__dirs):
             if dirname not in source_dirs:
-                shutil.rmtree(replica_dirpath + "/" + dirname)
+                shutil.rmtree(replica_dirpath + dirname)
                 del self.__dirs[dirname]
                 log_msg = self.log_message(
                     "DELETE", dirname, "dir", source_dirpath)
@@ -148,13 +139,11 @@ class Directory:
             if dirname in self.__dirs:
                 self.__dirs[dirname].synch(source_dirs[dirname])
             else:
-                origin = source_dirpath + "/" + dirname
-                dest = replica_dirpath + "/" + dirname
+                origin = source_dirpath + dirname
+                dest = replica_dirpath + dirname
                 shutil.copytree(origin, dest)
                 self.__dirs[dirname] = Directory(
-                    self.__rel_path + "/" + dirname,
-                    self.__root_path
-                )
+                    self.__path + dirname, self.__shallow)
                 log_msg = self.log_message(
                     "CREATE", dirname, "dir", source_dirpath)
                 print(log_msg)
