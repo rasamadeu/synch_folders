@@ -9,7 +9,7 @@ from datetime import datetime
 # Append to log_file the log_message
 def store_log_message(log_file, log_message):
     with open(log_file, 'a') as f:
-        f.write(log_message)
+        f.write(log_message + "\n")
 
 
 class File:
@@ -93,11 +93,11 @@ class Directory:
         if ftype == "dir":
             fname = fname + "/"
         if mode == "CREATE":
-            return message + f":  Create and Copy {fname} {ftype} from {source_name} in {self.get_dir_path()}"
+            return message + f":  Create and Copy '{fname}' {ftype} from {source_name} in {self.get_dir_path()}"
         if mode == "COPY":
-            return message + f":  Copy {fname} {ftype} from {source_name} to {self.get_dir_path()}"
+            return message + f":  Copy '{fname}' {ftype} from {source_name} to {self.get_dir_path()}"
         if mode == "DELETE":
-            return message + f":  Delete {fname} {ftype} in {self.get_dir_path()}"
+            return message + f":  Delete '{fname}' {ftype} in {self.get_dir_path()}"
 
     # Synchs this directory to exactly match source Directory
     def synch(self, source, log_file) -> None:
@@ -152,7 +152,7 @@ class Directory:
         # Create exact copy of dirs of source dir in replica dir
         for dirname in source_dirs:
             if dirname in self.__dirs:
-                self.__dirs[dirname].synch(source_dirs[dirname])
+                self.__dirs[dirname].synch(source_dirs[dirname], log_file)
             else:
                 origin = source_dirpath + dirname
                 dest = replica_dirpath + dirname

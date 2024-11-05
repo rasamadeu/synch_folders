@@ -19,7 +19,7 @@ def check_replica(replica, source):
             "The replica path must be different from the source path.")
     if os.path.isdir(replica):
         print("The replica path already exists.")
-        print("Are you sure you want to proceed? Proceeding with the program will delete replica folder contents.")
+        print("Are you sure you want to proceed? Proceeding with the program may delete replica folder contents.")
         answer = input("Write [y]es or [n]o: ")
         while answer.lower() not in {"y", "n", "yes", "no"}:
             answer = input("Invalid answer: please write [y]es or [n]o: ")
@@ -35,7 +35,7 @@ def check_time_delta(time_delta):
     time_delta_int = int(time_delta)
     if time_delta_int <= 0:
         raise ValueError
-    return time_delta
+    return time_delta_int
 
 
 def check_log_file(log_file):
@@ -43,7 +43,7 @@ def check_log_file(log_file):
         raise Exception("log_file must contain a valid file path.")
     if os.path.isfile(log_file):
         print("The log_file already exists.")
-        print("Are you sure you want to proceed? Proceeding with the program will delete log_file contents.")
+        print("Are you sure you want to proceed? Proceeding with the program will alter log_file contents.")
         answer = input("Write [y]es or [n]o: ")
         while answer.lower() not in {"y", "n", "yes", "no"}:
             answer = input("Invalid answer: please write [y]es or [n]o: ")
@@ -72,7 +72,7 @@ def main():
         "log_file", help="The file containing the log messages of the program")
     parser.add_argument("-s", "--shallow",
                         help="Option that sets shallow file comparison ON.\nIf set, files metadata is compared instead of its content.",
-                        action="store_false")
+                        action="store_true")
 
     args = vars(parser.parse_args())
     try:
@@ -83,9 +83,11 @@ def main():
     except ValueError:
         print("time_delta must be a positive integer (seconds between synchronizations)")
         print("Program terminated.")
+        return
     except Exception as e:
         print(e)
         print("Program terminated.")
+        return
 
     while True:
         source_dir = dir.Directory(source, shallow=args["shallow"])
