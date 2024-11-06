@@ -24,6 +24,7 @@ python3 synch_folders.py [-h] [-s] source replica time_delta log_file
 | -s, --shallow| Option that sets shallow file comparison ON.|
 
 ## Shallow mode:
+Shallow mode is by default OFF.
 - ON: Files' metadata (file type, size and modification time) is compared.
 - OFF: Files' content is compared via MD5 hashing.
 

@@ -91,6 +91,9 @@ def main():
 
     while True:
         source_dir = dir.Directory(source, shallow=args["shallow"])
+        # Check if replica was for some reason deleted
+        if not os.path.isdir(replica):
+            os.mkdir(replica)
         replica_dir = dir.Directory(replica, shallow=args["shallow"])
         replica_dir.synch(source_dir, log_file)
         sleep(time_delta)
