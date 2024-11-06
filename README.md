@@ -11,6 +11,7 @@ python3 synch_folders.py [-h] [-s] source replica time_delta log_file
 
 ## positional arguments:
 | Argument  | Description |
+| --------- | --------- |
 | source    | The path of the folder to be copied |
 | replica   | The path of the folder which stores the copy |
 | time_delta| The time interval in seconds between synchronizations |
