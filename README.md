@@ -29,10 +29,12 @@ python3 synch_folders.py [-h] [-s] source replica time_delta log_file
 
 > [!IMPORTANT]
 > The program is prepared to deal with changes in replica content in between synchronizations, if for some reason someone altered its contents. However, if replica is changed during the synchronization, the program might crash.
+> [!IMPORTANT]
 > If you guarantee that the replica folder is not changed by anyone other than the program, you can optimise the synch_folders.py by moving line 94:
 ```
     replica_dir = dir.Directory(replica, shallow=args["shallow"])
 ```
+> [!IMPORTANT]
 > before the while loop.
 
 
