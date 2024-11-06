@@ -33,11 +33,11 @@ Shallow mode is by default OFF.
 
 > [!IMPORTANT]
 > The program is prepared to deal with changes in replica content in between synchronizations, if for some reason someone altered its contents. However, if replica is changed during the synchronization, the program might crash.
-> If you guarantee that the replica folder is not changed by anyone other than the program, you can optimise the synch_folders.py by moving line 94:
+> If you guarantee that the replica folder is not changed by anyone other than the program, you can optimise synch_folders.py by moving line 94:
 >```
 >    replica_dir = dir.Directory(replica, shallow=args["shallow"])
 >```
-> before the while loop.
+> before the while loop. This will speed up synchronization since the program does not have to walk replica folder each synchronization.
 
 
 
