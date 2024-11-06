@@ -1,6 +1,9 @@
 # synch_folders
 
-A Python program that synchronizes two folders: source and replica. The program maintains a full, identical copy of source at replica folder. The synchronization is performed periodically, and the operations messages are printed to the console and logged to a file.
+A Python program that synchronizes two folders: source and replica.
+
+The program maintains a full, identical copy of source at replica folder. The synchronization is performed periodically, and the operations messages are printed to the console and logged to a file.
+
 To run the program, you must have a Python interpreter (version 3.10 or higher).
 
 # Usage
