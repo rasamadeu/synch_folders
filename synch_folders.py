@@ -43,7 +43,7 @@ def check_log_file(log_file):
         raise Exception("log_file must contain a valid file path.")
     if os.path.isfile(log_file):
         print("The log_file already exists.")
-        print("Are you sure you want to proceed? Proceeding with the program will alter log_file contents.")
+        print("Are you sure you want to proceed? Proceeding with the program will delete log_file contents.")
         answer = input("Write [y]es or [n]o: ")
         while answer.lower() not in {"y", "n", "yes", "no"}:
             answer = input("Invalid answer: please write [y]es or [n]o: ")
