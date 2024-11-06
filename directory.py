@@ -4,6 +4,12 @@ import os
 import shutil
 import pdb
 from datetime import datetime
+from sys import platform
+
+# Set the directory separator based on OS
+SEPARATOR = "/"
+if platform == 'win32':
+    SEPARATOR = "\\"
 
 
 # Append to log_file the log_message
@@ -61,8 +67,8 @@ class Directory:
     def __init__(self, path: str, shallow=True):
 
         # Step for better formatting of messages
-        if path[-1] != "/":
-            path += "/"
+        if path[-1] != SEPARATOR:
+            path += SEPARATOR
 
         self.__path = path
         self.__dirs = dict()
@@ -91,7 +97,7 @@ class Directory:
     def log_message(self, mode: str, fname: str, ftype: str, source_name: str) -> str:
         message = datetime.now().ctime()
         if ftype == "dir":
-            fname = fname + "/"
+            fname = fname + SEPARATOR
         if mode == "CREATE":
             return message + f":  Create and Copy '{fname}' {ftype} from {source_name} in {self.get_dir_path()}"
         if mode == "COPY":
